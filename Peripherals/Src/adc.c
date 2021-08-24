@@ -360,6 +360,11 @@ void adc_INJ_config(uint8_t channel)
   //JEXTSEL[2:0]:External event select for injected group
   ADC1->CR2 |= (ADC_CR2_JEXTSEL_0 | ADC_CR2_JEXTSEL_1 | ADC_CR2_JEXTSEL_2); //111: JSWSTART
 
+  //Enable Injected EOC Interrupt
+  //in ADC control register 1 (ADC_CR1)
+  //JEOCIE:Interrupt enable for injected channels
+  ADC1->CR1 |= ADC_CR1_JEOCIE; //1: JEOC interrupt enabled. An interrupt is generated when the JEOC bit is set.
+
   //Number of conversion
   //in ADC injected sequence register (ADC_JSQR)
   //JL[1:0]:Injected sequence length
@@ -396,6 +401,9 @@ void adc_INJ_config(uint8_t channel)
 
   //Wait for ADC clock to stabilise (couple micro seconds)
   //for (uint16_t i = 0; i < 36; i++); //72 cycles = 1uSec, for loop 4 cycles each, 72*2/4 = 36
+
+  //ADC NVIC Interrupt
+  NVIC_EnableIRQ(ADC1_2_IRQn);
 }
 
 /*

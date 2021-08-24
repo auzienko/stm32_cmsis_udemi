@@ -2,6 +2,7 @@
 
 bool      adcEoc = false;
 bool      adcAwd = false;
+bool      adcJEoc = false;
 uint16_t  adcArray[3] = {0};
 
 int main(void)
@@ -49,14 +50,15 @@ int main(void)
         printf("AWD is Triggered!\n\r");
       }
     }
-    if(gpio_PB_read())
+    if (gpio_PB_read())
     {
       adc_INJ_start();
-      if (adc_INJ_pollForConversion(100))
-      {
-        injAdcValue = ADC1->JDR1;
-        printf("INJ ADC Value = %d\n\r", (int)(injAdcValue));
-      }
+    }
+    if (adcJEoc)
+    {
+      injAdcValue = ADC1->JDR1;
+      printf("INJ ADC Value = %d\n\r", (int)(injAdcValue));
+      adcJEoc = false;
       rcc_msDelay(100);
     }
   }
@@ -97,6 +99,17 @@ void ADC1_2_IRQHandler(void)
     //AWD:Analog watch dog flag
     ADC1->SR &= ~(ADC_SR_AWD);
     adcAwd = true;
+  }
+  //Is JEOC?
+  //in ADC status register (ADC_SR)
+  //JEOC:Injected channel end of conversion
+  if (ADC1->SR & ADC_SR_JEOC)
+  {
+    //Clear JEOC flag
+    //in JEOC status register (ADC_SR)
+    //JEOC:Injected channel end of conversion
+    ADC1->SR &= ~(ADC_SR_JEOC);
+    adcJEoc = true;
   }
   //Clear Interrupt
   NVIC_ClearPendingIRQ(ADC1_2_IRQn);
