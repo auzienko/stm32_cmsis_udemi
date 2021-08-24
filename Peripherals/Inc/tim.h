@@ -15,4 +15,14 @@
  */
 void tim_TIM3_config(void);
 
+/*
+ * @brief Delay timer configuration - TIM2
+ */
+void tim_TIM2_delay_config(void);
+
+/*
+ * @brief milli second delay - TIM2
+ */
+void tim_TIM2_msDelay(uint32_t ms);
+
 #endif /* INC_TIM_H_ */
