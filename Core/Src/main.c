@@ -16,31 +16,14 @@ int main(void)
   gpio_PB_config();
   //GPIO switch configuration
   gpio_SW_config();
-  //TIM2 - Delay
-  //tim_TIM2_delay_config();
-  //TIM2 Periodic
-  tim_TIM2_periodic_config(300);
+  //TIM1-CH1N -->PB13 Output Compare
+  tim_TIM1_CH1N_GPIO_config();
+  tim_TIM1_OC_config(300);
 
   /* Loop forever */
   while(1)
   {
-    gpio_LED_toggleGreen();
+    printf("Output Compare is Active, TIM1 Counter = %d\n\r", (int)(TIM1->CNT));
     rcc_msDelay(1000);
-  }
-}
-
-void TIM2_IRQHandler(void)
-{
-  //is TIM2 interrupt?
-  //in TIMx status register (TIMx_SR)
-  //UIF:Update interrupt flag
-  if (TIM2->SR & TIM_SR_UIF)
-  {
-    //Clear flag
-    TIM2->SR &= ~(TIM_SR_UIF);
-    //Clear NVIC
-    NVIC_ClearPendingIRQ(TIM2_IRQn);
-    //Indication
-    gpio_LED_toggleRed();
   }
 }
