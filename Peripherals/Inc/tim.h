@@ -25,4 +25,9 @@ void tim_TIM2_delay_config(void);
  */
 void tim_TIM2_msDelay(uint32_t ms);
 
+/*
+ * @brief Periodic TIM2 Interrupt
+ */
+void tim_TIM2_periodic_config(uint32_t msPeriod);
+
 #endif /* INC_TIM_H_ */
