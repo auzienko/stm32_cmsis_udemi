@@ -289,3 +289,203 @@ void tim_TIM1_OC_config(uint32_t msPeriod)
   TIM1->CR1 |= TIM_CR1_CEN; //1: Counter enabled
 }
 
+/*
+ * @brief PWM Channel GPIO Configuration - TIM3 CH1 (PB4 - Red), CH2 (PB5 - Green), CH3 (PB0 - Blue)
+ */
+void  tim_TIM3_GPIO_config(void)
+{
+  //Enable Alternative Function clock
+  //in APB2 peripheral clock enable register (RCC_APB2ENR)
+  //AFIOEN:Alternate function IO clock enable
+  RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; // 1: Alternate Function IO clock enabled
+
+  //Enable PWR
+  //The PWR peripheral is used to control the device power supply configuration.
+  //in APB1 peripheral clock enable register (RCC_APB1ENR)
+  //PWREN:Power interface clock enable
+  RCC->APB1ENR |= RCC_APB1ENR_PWREN; // 1: Power interface clock enable
+
+  //Partial remap TIM3 CH1 (PB4 - Red), CH2 (PB5 - Green)
+  //in AF remap and debug I/O configuration register (AFIO_MAPR)
+  //TIM3_REMAP[1:0]:TIM3 remapping
+  AFIO->MAPR &= ~(AFIO_MAPR_TIM3_REMAP); //clear
+  AFIO->MAPR |= AFIO_MAPR_TIM3_REMAP_1; //10: Partial remap (CH1/PB4, CH2/PB5, CH3/PB0, CH4/PB1)
+
+  //Enable Port B clock
+  //in APB2 peripheral clock enable register (RCC_APB2ENR)
+  //IOPBEN:IO port B clock enable
+  RCC->APB2ENR |= RCC_APB2ENR_IOPBEN; //1: IO port B clock enabled
+
+  //PB4
+  //Config Port B4 to Output mode
+  //in Port configuration register low (GPIOx_CRL) (x=A..G)
+  //MODEy[1:0]:Portx mode bits (y=0..7)
+  GPIOB->CRL &= ~(GPIO_CRL_MODE4); //clear
+  GPIOB->CRL |= GPIO_CRL_MODE4_1; //10: Output mode, max speed 2 MHz.
+
+  //Config Port B4 to Alternate function output Push-pull
+  //in Port configuration register low (GPIOx_CRL) (x=A..G)
+  //CNFy[1:0]:Portx configuration bits (y=0..7)
+  GPIOB->CRL &= ~(GPIO_CRL_CNF4); //clear
+  GPIOB->CRL |= GPIO_CRL_CNF4_1; //10: Alternate function output Push-pull
+
+  //PB5
+  //Config Port B5 to Output mode
+  //in Port configuration register low (GPIOx_CRL) (x=A..G)
+  //MODEy[1:0]:Portx mode bits (y=0..7)
+  GPIOB->CRL &= ~(GPIO_CRL_MODE5); //clear
+  GPIOB->CRL |= GPIO_CRL_MODE5_1; //10: Output mode, max speed 2 MHz.
+
+  //Config Port B4 to Alternate function output Push-pull
+  //in Port configuration register low (GPIOx_CRL) (x=A..G)
+  //CNFy[1:0]:Portx configuration bits (y=0..7)
+  GPIOB->CRL &= ~(GPIO_CRL_CNF5); //clear
+  GPIOB->CRL |= GPIO_CRL_CNF5_1; //10: Alternate function output Push-pull
+
+  //PB0
+  //Config Port B0 to Output mode
+  //in Port configuration register low (GPIOx_CRL) (x=A..G)
+  //MODEy[1:0]:Portx mode bits (y=0..7)
+  GPIOB->CRL &= ~(GPIO_CRL_MODE0); //clear
+  GPIOB->CRL |= GPIO_CRL_MODE0_1; //10: Output mode, max speed 2 MHz.
+
+  //Config Port B4 to Alternate function output Push-pull
+  //in Port configuration register low (GPIOx_CRL) (x=A..G)
+  //CNFy[1:0]:Portx configuration bits (y=0..7)
+  GPIOB->CRL &= ~(GPIO_CRL_CNF0); //clear
+  GPIOB->CRL |= GPIO_CRL_CNF0_1; //10: Alternate function output Push-pull
+}
+
+/*
+ * @brief PWM Duty Cycle - RGB (0 - 255)
+ */
+void tim_PWM_setRGB(uint8_t R, uint8_t G, uint8_t B)
+{
+  TIM3->CCR1 = (uint16_t)((TIM3->ARR + 0.0f) * (R / 255.0f));
+  TIM3->CCR2 = (uint16_t)((TIM3->ARR + 0.0f) * (G / 255.0f));
+  TIM3->CCR3 = (uint16_t)((TIM3->ARR + 0.0f) * (B / 255.0f));
+}
+
+/*
+ * @brief TIM3 PWM configuration
+ */
+void  tim_TIM3_PWM_config(void)
+{
+  //Enable TIM3
+  //in APB1 peripheral clock enable register (RCC_APB1ENR)
+  //TIM3EN:TIM3 timer clock enable
+  RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; //1: TIM3 timer clock enabled
+
+  //Count up
+  //in TIMx control register 1 (TIMx_CR1)
+  //DIR:Direction
+  TIM3->CR1 &= ~(TIM_CR1_DIR); //0: Counter used as upcounter
+
+  //Periodic
+  //in TIMx control register 1 (TIMx_CR1)
+  //OPM:One-pulse mode
+  TIM3->CR1 &= ~(TIM_CR1_OPM); //0: Counter is not stopped at update event
+
+  //Mode --> RESET
+  //in TIMx control register 2 (TIMx_CR2)
+  //MMS[2:0]: Master mode selection
+  TIM3->CR2 &= ~(TIM_CR2_MMS); //000: Reset - the UG bit from the TIMx_EGR register is used as trigger output (TRGO).
+
+  //Prescaler
+  //in TIMx prescaler (TIMx_PSC)
+  //PSC[15:0]:Prescaler value
+  TIM3->PSC = 0;
+
+  //Period
+  //in TIMx auto-reload register (TIMx_ARR)
+  TIM3->ARR = 7200 - 1; // 10KHz
+
+  //Clear Update Interrupt flag
+  //in TIMxstatusregister(TIMx_SR)
+  //UIF:Update interrupt flag
+  TIM3->SR &= ~(TIM_SR_UIF);
+
+  //Disable Output Compare (OC)
+  //in TIM1 and TIM8 capture/compare enable register (TIMx_CCER)
+  TIM3->CCER = 0; //disable all
+
+  /* TIM3 CH1 */
+
+  //Set mode output
+  //in TIMx capture/compare mode register 1 (TIMx_CCMR1)
+  //CC1S:Capture/Compare 1 selection
+  TIM3->CCMR1 &= ~(TIM_CCMR1_CC1S); //00: CC1 channel is configured as output
+
+  //PWM mode
+  //in TIMx capture/compare mode register 1 (TIMx_CCMR1)
+  //OC1M: Output compare 1 mode
+  TIM3->CCMR1 &= ~(TIM_CCMR1_OC1M);
+  TIM3->CCMR1 |= (TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2); //110: PWM mode 1 - In upcounting, channel 1 is active as long as TIMx_CNT<TIMx_CCR1 else inactive.
+
+  //polarity
+  //in TIMx capture/compare enable register (TIMx_CCER)
+  //CC1P:Capture/Compare 1 output polarity
+  TIM3->CCER &= ~(TIM_CCER_CC1P); //0: OC1 active high.
+
+  //set pulse width - duty cycle
+  //in TIMx capture/compare register 1 (TIMx_CCR1)
+  //clear, because we will use another function
+  TIM3->CCR1 = 0;
+
+  /* TIM3 CH2 */
+
+  //Set mode output
+  //in TIMx capture/compare mode register 1 (TIMx_CCMR1)
+  //CC2S:Capture/Compare 1 selection
+  TIM3->CCMR1 &= ~(TIM_CCMR1_CC2S); //00: CC2 channel is configured as output
+
+  //PWM mode
+  //in TIMx capture/compare mode register 1 (TIMx_CCMR1)
+  //OC2M: Output compare 1 mode
+  TIM3->CCMR1 &= ~(TIM_CCMR1_OC2M);
+  TIM3->CCMR1 |= (TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2); //110: PWM mode 1 - In upcounting, channel 1 is active as long as TIMx_CNT<TIMx_CCR1 else inactive.
+
+  //polarity
+  //in TIMx capture/compare enable register (TIMx_CCER)
+  //CC2P:Capture/Compare 1 output polarity
+  TIM3->CCER &= ~(TIM_CCER_CC2P); //0: OC1 active high.
+
+  //set pulse width - duty cycle
+  //in TIMx capture/compare register 2 (TIMx_CCR2)
+  //clear, because we will use another function
+  TIM3->CCR2 = 0;
+
+  /* TIM3 CH3 */
+
+  //Set mode output
+  //in TIMx capture/compare mode register 2 (TIMx_CCMR2)
+  //CC3S:Capture/Compare 1 selection
+  TIM3->CCMR2 &= ~(TIM_CCMR2_CC3S); //00: CC3 channel is configured as output
+
+  //PWM mode
+  //in TIMx capture/compare mode register 2 (TIMx_CCMR2)
+  //OC3M: Output compare 1 mode
+  TIM3->CCMR2 &= ~(TIM_CCMR2_OC3M);
+  TIM3->CCMR2 |= (TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2); //110: PWM mode 1 - In upcounting, channel 1 is active as long as TIMx_CNT<TIMx_CCR1 else inactive.
+
+  //polarity
+  //in TIMx capture/compare enable register (TIMx_CCER)
+  //CC3P:Capture/Compare 1 output polarity
+  TIM3->CCER &= ~(TIM_CCER_CC3P); //0: OC1 active high.
+
+  //set pulse width - duty cycle
+  //in TIMx capture/compare register 3 (TIMx_CCR3)
+  //clear, because we will use another function
+  TIM3->CCR3 = 0;
+
+  //Enable Channels 1, 2, 3
+  //in TIMx capture/compare enable register (TIMx_CCER)
+  //CC1E:Capture/Compare 1 output enable, CC2E 2, CC3E 3
+  TIM3->CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E); //1: On - OCx (1,2,3) signal is output on the corresponding output pin.
+
+  //Start TIM3
+  //in TIMx control register 1 (TIMx_CR1)
+  //CEN:Counter enable
+  TIM3->CR1 |= TIM_CR1_CEN; //1: Counter enabled
+
+}

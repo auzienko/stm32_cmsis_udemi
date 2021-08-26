@@ -16,14 +16,22 @@ int main(void)
   gpio_PB_config();
   //GPIO switch configuration
   gpio_SW_config();
-  //TIM1-CH1N -->PB13 Output Compare
-  tim_TIM1_CH1N_GPIO_config();
-  tim_TIM1_OC_config(300);
+  //TIM3 PWM LEDs
+  tim_TIM3_PWM_config();
+  tim_TIM3_GPIO_config();
+
 
   /* Loop forever */
   while(1)
   {
-    printf("Output Compare is Active, TIM1 Counter = %d\n\r", (int)(TIM1->CNT));
-    rcc_msDelay(1000);
+    //Red
+    tim_PWM_setRGB(255, 0, 0);
+    rcc_msDelay(2000);
+    //Green
+    tim_PWM_setRGB(0, 255, 0);
+    rcc_msDelay(2000);
+    //Blue
+    tim_PWM_setRGB(0, 0, 255);
+    rcc_msDelay(2000);
   }
 }
