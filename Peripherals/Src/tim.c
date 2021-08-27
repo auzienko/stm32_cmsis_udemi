@@ -487,5 +487,113 @@ void  tim_TIM3_PWM_config(void)
   //in TIMx control register 1 (TIMx_CR1)
   //CEN:Counter enable
   TIM3->CR1 |= TIM_CR1_CEN; //1: Counter enabled
+}
 
+/*
+ * @brief Encoder GPIO pins; PB6, PB7 configuration;
+ */
+void  tim_TIM4_Enconder_GPIO_config(void)
+{
+  //Enable PB clock
+  //in APB2 peripheral clock enable register (RCC_APB2ENR)
+  //IOPBEN:I/O port B clock enable
+  RCC->APB2ENR |= RCC_APB2ENR_IOPBEN; //1:I/O port B clock enabled
+
+  //PB6 & PB7 "Floating input" configuration
+  //in Port configuration register low (GPIOx_CRL) (x=A..G)
+  //MODEy[1:0]:Portx mode bits(y=0..7)
+  //CNFy[1:0]:Portx configuration bits(y=0..7)
+  GPIOB->CRL &= ~(GPIO_CRL_MODE6); //00: Input mode (reset state)
+  GPIOB->CRL &= ~(GPIO_CRL_MODE7); //00: Input mode (reset state)
+  GPIOB->CRL &= ~(GPIO_CRL_CNF6); //clear
+  GPIOB->CRL |= GPIO_CRL_CNF6_0; //01: Floating input (reset state)
+  GPIOB->CRL &= ~(GPIO_CRL_CNF7); //clear
+  GPIOB->CRL |= GPIO_CRL_CNF7_0; //01: Floating input (reset state)
+}
+
+/*
+ * @brief Encoder TIM Peripheral configuration
+ */
+void  tim_TIM4_Encoder_config()
+{
+  //Enable TIM4
+  //in APB1 peripheral clock enable register (RCC_APB1ENR)
+  //TIM4EN:TIM4 timer clock enable
+  RCC->APB1ENR |= RCC_APB1ENR_TIM4EN; //1: TIM4 timer clock enabled
+
+  //Count up
+  //in TIMx control register 1 (TIMx_CR1)
+  //DIR:Direction
+  TIM4->CR1 &= ~(TIM_CR1_DIR); //0: Counter used as upcounter
+
+  //Periodic
+  //in TIMx control register 1 (TIMx_CR1)
+  //OPM:One-pulse mode
+  TIM4->CR1 &= ~(TIM_CR1_OPM); //0: Counter is not stopped at update event
+
+  //Mode --> RESET
+  //in TIMx control register 2 (TIMx_CR2)
+  //MMS[2:0]: Master mode selection
+  TIM4->CR2 &= ~(TIM_CR2_MMS); //000: Reset - the UG bit from the TIMx_EGR register is used as trigger output (TRGO).
+
+  //Prescaler
+  //in TIMx prescaler (TIMx_PSC)
+  //PSC[15:0]:Prescaler value
+  TIM4->PSC = 0;
+
+  //Period
+  //in TIMx auto-reload register (TIMx_ARR)
+  TIM4->ARR = 0xFFFF;
+
+  //Clear Update Interrupt flag
+  //in TIMxstatusregister(TIMx_SR)
+  //UIF:Update interrupt flag
+  TIM4->SR &= ~(TIM_SR_UIF);
+
+  /* Encoder mode settings */
+  //Reset Slave mode registers
+  //in TIMx slave mode control register (TIMx_SMCR)
+  //SMS:Slave mode selection
+  TIM4->SMCR &= ~(TIM_SMCR_SMS); //000: Slave mode disabled - if CEN = ‘1 then the prescaler is clocked directly by the internal clock.
+  //ECE:External clock enable
+  TIM4->SMCR &= ~(TIM_SMCR_ECE); //0: External clock mode 2 disabled
+
+  //Set Encoder mode
+  //in TIMx slave mode control register (TIMx_SMCR)
+  //SMS:Slave mode selection
+  TIM4->SMCR |= TIM_SMCR_SMS_0; //001: Encoder mode 1 - Counter counts up/down on TI2FP1 edge depending on TI1FP2 level.
+
+  //Set CC (capture compare) as Input IC (input capture) CH1 & CH2
+  //in TIMx capture/compare mode register 1 (TIMx_CCMR1)
+  //CC1S:Capture/Compare 1 selection
+  TIM4->CCMR1 &= ~(TIM_CCMR1_CC1S | TIM_CCMR1_CC2S); //clear
+  TIM4->CCMR1 |= (TIM_CCMR1_CC1S_0); //01: CC1 channel is configured as input, IC1 is mapped on TI1.
+  TIM4->CCMR1 |= (TIM_CCMR1_CC2S_0); //01: CC2 channel is configured as input, IC2 is mapped on TI2
+
+  //Set CC prescaler to 0
+  //in TIMx capture/compare mode register 1 (TIMx_CCMR1)
+  //IC1PSC:Input capture 1 prescaler
+  TIM4->CCMR1 &= ~(TIM_CCMR1_IC1PSC | TIM_CCMR1_IC2PSC); //00: no prescaler, capture is done each time an edge is detected on the capture input
+
+  //Input filter
+  //in TIMx capture/compare mode register 1 (TIMx_CCMR1)
+  //IC1F:Inputcapture1filter
+  TIM4->CCMR1 &= ~(TIM_CCMR1_IC1F | TIM_CCMR1_IC2F); //clear
+  TIM4->CCMR1 |= TIM_CCMR1_IC1F_1; //0010: fSAMPLING=fCK_INT, N=4
+  TIM4->CCMR1 |= TIM_CCMR1_IC2F_1; //0010: fSAMPLING=fCK_INT, N=4
+
+  //Set polarity to rising
+  //in TIMx capture/compare enable register (TIMx_CCER)
+  //CC1P:Capture/Compare 1 output polarity (+ CC2P:Capture/Compare 2 output polarity)
+  TIM4->CCER &= ~(TIM_CCER_CC1P | TIM_CCER_CC2P); //0: non-inverted: capture is done on a rising edge of IC1 /IC2.
+
+  //Enable Encoder
+  //in TIMx capture/compare enable register (TIMx_CCER)
+  //CC1E:Capture/Compare 1 output enable & CC2E:Capture/Compare 2 output enable
+  TIM4->CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E); //1: Capture enabled.
+
+  //Start TIM4
+  //in TIMx control register 1 (TIMx_CR1)
+  //CEN:Counter enable
+  TIM4->CR1 |= TIM_CR1_CEN; //1: Counter enabled
 }

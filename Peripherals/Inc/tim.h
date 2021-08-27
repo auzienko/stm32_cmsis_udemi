@@ -55,4 +55,14 @@ void tim_PWM_setRGB(uint8_t R, uint8_t G, uint8_t B);
  */
 void  tim_TIM3_PWM_config(void);
 
+/*
+ * @brief Encoder GPIO pins; PB6, PB7 configuration;
+ */
+void  tim_TIM4_Enconder_GPIO_config(void);
+
+/*
+ * @brief Encoder TIM Peripheral configuration
+ */
+void  tim_TIM4_Encoder_config();
+
 #endif /* INC_TIM_H_ */

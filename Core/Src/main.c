@@ -16,22 +16,17 @@ int main(void)
   gpio_PB_config();
   //GPIO switch configuration
   gpio_SW_config();
-  //TIM3 PWM LEDs
-  tim_TIM3_PWM_config();
-  tim_TIM3_GPIO_config();
+  //Encoder
+  tim_TIM4_Enconder_GPIO_config();
+  tim_TIM4_Encoder_config();
 
 
   /* Loop forever */
   while(1)
   {
-    //Red
-    tim_PWM_setRGB(255, 0, 0);
-    rcc_msDelay(2000);
-    //Green
-    tim_PWM_setRGB(0, 255, 0);
-    rcc_msDelay(2000);
-    //Blue
-    tim_PWM_setRGB(0, 0, 255);
-    rcc_msDelay(2000);
+    printf("Encoder Counter = %d\n\r", (int)TIM4->CNT);
+    printf("Direction: %s\n\r", ((TIM4->CR1) & TIM_CR1_DIR) == 0 ? "CW":"CCW");
+    gpio_LED_toggleGreen();
+    rcc_msDelay(250);
   }
 }
