@@ -1,4 +1,5 @@
 #include "main.h"
+#include <time.h>
 
 int main(void)
 {
@@ -16,17 +17,17 @@ int main(void)
   gpio_PB_config();
   //GPIO switch configuration
   gpio_SW_config();
-  //Encoder
-  tim_TIM4_Enconder_GPIO_config();
-  tim_TIM4_Encoder_config();
+  //RTC
+  rtc_LSE_config();
+  rtc_config();
+  rtc_set_unix_time(1000);
+
 
 
   /* Loop forever */
   while(1)
   {
-    printf("Encoder Counter = %d\n\r", (int)TIM4->CNT);
-    printf("Direction: %s\n\r", ((TIM4->CR1) & TIM_CR1_DIR) == 0 ? "CW":"CCW");
-    gpio_LED_toggleGreen();
-    rcc_msDelay(250);
+    printf("RTC Counter = %d\n\r", (int)rtc_get_unix_time());
+    rcc_msDelay(1000);
   }
 }
