@@ -17,7 +17,6 @@
 #include "tm1637.h"
 #include "exti.h"
 #include "adc.h"
-#include "tim.h"
 #include "rtc.h"
 
 //TM1637 Digits pins

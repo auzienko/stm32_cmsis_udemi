@@ -7,6 +7,17 @@
 
 #include "rtc.h"
 
+const char  *daysOfWeekString[7] =
+{
+    "MON",
+    "TUE",
+    "WED",
+    "THU",
+    "FRI",
+    "SUT",
+    "SUN"
+};
+
 /*
  * @brief RTC LSE configuration
  */
@@ -127,3 +138,54 @@ uint32_t  rtc_get_unix_time(void)
 {
   return ((uint32_t)(RTC->CNTL + (RTC->CNTH << 16)));
 }
+
+/*
+ * @brief Set Time and Date
+ * @note No need to set week day
+ */
+void rtc_set_TimeDate(RTC_TimeDate_t *pTimeDate)
+{
+  struct  tm  myTime;
+  struct  tm  *timePtr = &myTime;
+  time_t      timeSecs;
+
+  //Convert Time Date typedef into time.h library structure
+  timePtr->tm_hour = pTimeDate->hour;
+  timePtr->tm_min = pTimeDate->min;
+  timePtr->tm_sec = pTimeDate->sec;
+  timePtr->tm_mday = pTimeDate->mday;
+  timePtr->tm_mon = pTimeDate->month-1;
+  timePtr->tm_year = pTimeDate->year-1900;
+  timeSecs = mktime(timePtr);
+
+  //Set STM32 RTC Counter value
+  rtc_set_unix_time((uint32_t)timeSecs);
+}
+
+/*
+ * @brief Get Time and Date
+ * @note Return a valid weekday
+ */
+void rtc_get_TimeDate(RTC_TimeDate_t *pTimeDate)
+{
+  struct  tm  myTime;
+  struct  tm *timePtr = &myTime;
+  time_t      timeSecs;
+
+  //Get STM32 RTC Unix counter
+  timeSecs = (time_t)rtc_get_unix_time();
+
+  //time.h library to convert back to normal TimeDate
+  timePtr = gmtime(&timeSecs);
+
+  //Return result to user
+  pTimeDate->hour = timePtr->tm_hour;
+  pTimeDate->min = timePtr->tm_min;
+  pTimeDate->sec = timePtr->tm_sec;
+
+  pTimeDate->mday = timePtr->tm_mday;
+  pTimeDate->wday = timePtr->tm_wday;
+  pTimeDate->month = timePtr->tm_mon + 1; //0 - 11 --> 1 - 12
+  pTimeDate->year = timePtr->tm_year + 1900;
+}
+
