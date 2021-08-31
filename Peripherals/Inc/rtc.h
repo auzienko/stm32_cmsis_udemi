@@ -58,4 +58,29 @@ void rtc_set_TimeDate(RTC_TimeDate_t *pTimeDate);
  */
 void rtc_get_TimeDate(RTC_TimeDate_t *pTimeDate);
 
+/*
+ * @brief Alarm configuration
+ */
+void rtc_alarm_config(void);
+
+/*
+ * @brief Alarm counter Set
+ */
+void rtc_set_unix_alarm(uint32_t unix);
+
+/*
+ * @brief Alarm counter Get
+ */
+uint32_t rtc_get_unix_alarm(void);
+
+/*
+ * @brief Set Alarm
+ */
+void rtc_set_alarm(RTC_TimeDate_t *pTimeDate);
+
+/*
+ * @brief Get Alarm
+ */
+void rtc_get_alarm(RTC_TimeDate_t *pTimeDate);
+
 #endif /* INC_RTC_H_ */

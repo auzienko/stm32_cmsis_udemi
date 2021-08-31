@@ -1,5 +1,7 @@
 #include "main.h"
 
+bool alarmFlag = false;
+
 int main(void)
 {
   RTC_TimeDate_t myTimeDate;
@@ -21,14 +23,32 @@ int main(void)
   //RTC
   rtc_LSE_config();
   rtc_config();
-  myTimeDate.hour = 20;
-  myTimeDate.min = 45;
+//  myTimeDate.hour = 22;
+//  myTimeDate.min = 45;
+//  myTimeDate.sec = 0;
+//  myTimeDate.month = 8;
+//  myTimeDate.mday = 30;
+//  myTimeDate.year = 2021;
+  //rtc_set_TimeDate(&myTimeDate);
+
+  //RTC Alarm
+  rtc_alarm_config();
+  myTimeDate.hour = 18;
+  myTimeDate.min = 21;
   myTimeDate.sec = 0;
   myTimeDate.month = 8;
-  myTimeDate.mday = 30;
+  myTimeDate.mday = 31;
   myTimeDate.year = 2021;
-  rtc_set_TimeDate(&myTimeDate);
-
+  rtc_set_alarm(&myTimeDate);
+  rtc_get_alarm(&myTimeDate);
+  printf("Alarm's Time & Date %d:%d:%d %d.%d.%d %s\n\r",
+      (int)myTimeDate.hour,
+      (int)myTimeDate.min,
+      (int)myTimeDate.sec,
+      (int)myTimeDate.mday,
+      (int)myTimeDate.month,
+      (int)myTimeDate.year,
+      daysOfWeekString[(int)myTimeDate.wday - 1]);
   /* Loop forever */
   while(1)
   {
@@ -42,6 +62,21 @@ int main(void)
         (int)myTimeDate.month,
         (int)myTimeDate.year,
         daysOfWeekString[(int)myTimeDate.wday - 1]);
+    if (alarmFlag)
+    {
+      printf("Alarm!\n\r");
+      alarmFlag = false;
+    }
     rcc_msDelay(1000);
   }
+}
+
+//Alarm Interrupt Handler
+void RTC_Alarm_IRQHandler(void)
+{
+    //Clear flags
+    EXTI->PR |= EXTI_PR_PR17; //1: selected trigger request occurred (This bit is cleared by writing a ‘1’ into the bit.)
+    NVIC_ClearPendingIRQ(RTC_Alarm_IRQn);
+    //Notify app
+    alarmFlag = true;
 }
