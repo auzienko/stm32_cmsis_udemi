@@ -83,4 +83,9 @@ void rtc_set_alarm(RTC_TimeDate_t *pTimeDate);
  */
 void rtc_get_alarm(RTC_TimeDate_t *pTimeDate);
 
+/*
+ * @brief Enable Backup registers write access
+ */
+void rtc_backup_registers_enable(void);
+
 #endif /* INC_RTC_H_ */

@@ -297,3 +297,21 @@ void rtc_get_alarm(RTC_TimeDate_t *pTimeDate)
   pTimeDate->month = timePtr->tm_mon + 1; //0 - 11 --> 1 - 12
   pTimeDate->year = timePtr->tm_year + 1900;
 }
+
+/*
+ * @brief Enable Backup registers write access
+ */
+void rtc_backup_registers_enable(void)
+{
+  //Enable the power and backup interface clocks by setting the PWREN and BKPEN bits in the RCC_APB1ENR register
+  //in APB1 peripheral clock enable register (RCC_APB1ENR)
+  //PWREN:Power interface clock enable
+  //BKPEN:Backup interface clock enable
+  RCC->APB1ENR |= RCC_APB1ENR_PWREN; //1: Power interface clock enable
+  RCC->APB1ENR |= RCC_APB1ENR_BKPEN; //1: Backup interface clock enabled
+
+  //set the DBP bit in the Power control register (PWR_CR) to enable access to the Backup registers and RTC.
+  //in Power control register (PWR_CR)
+  //DBP:Disable backup domain write protection.
+  PWR->CR |= PWR_CR_DBP; //1: Access to RTC and Backup registers enabled
+}
