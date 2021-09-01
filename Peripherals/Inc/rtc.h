@@ -88,4 +88,14 @@ void rtc_get_alarm(RTC_TimeDate_t *pTimeDate);
  */
 void rtc_backup_registers_enable(void);
 
+/*
+ * @brief Tamper Enable
+ */
+void rtc_tamper_enable(void);
+
+/*
+ * @brief Tamper Disable
+ */
+void rtc_tamper_disable(void);
+
 #endif /* INC_RTC_H_ */

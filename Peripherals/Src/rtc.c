@@ -315,3 +315,51 @@ void rtc_backup_registers_enable(void)
   //DBP:Disable backup domain write protection.
   PWR->CR |= PWR_CR_DBP; //1: Access to RTC and Backup registers enabled
 }
+
+/*
+ * @brief Tamper Enable
+ */
+void rtc_tamper_enable(void)
+{
+  //Enable Tamper pin
+  //in Backup control register (BKP_CR)
+  //TPE:TAMPER pin enable
+  BKP->CR |= BKP_CR_TPE; //1: Tamper alternate I/O function is activated.
+
+  //Enable Interrupt
+  //in Backup control/status register (BKP_CSR)
+  //TPIE:TAMPER pin interrupt enable
+  BKP->CSR |= BKP_CSR_TPIE; //1: Tamper interrupt enabled
+  NVIC_EnableIRQ(TAMPER_IRQn);
+
+  //Clear Interrupt
+  //in Backup control/status register (BKP_CSR)
+  //CTI:Clear tamper interrupt
+  //CTE:Clear tamper event
+  BKP->CSR |= BKP_CSR_CTI; //1: Clear the Tamper interrupt and the TIF Tamper interrupt flag.
+  BKP->CSR |= BKP_CSR_CTE; //1: Reset the TEF Tamper event flag (and the Tamper detector)
+}
+
+/*
+ * @brief Tamper Disable
+ */
+void rtc_tamper_disable(void)
+{
+  //Disable Tamper pin
+  //in Backup control register (BKP_CR)
+  //TPE:TAMPER pin enable
+  BKP->CR &= ~(BKP_CR_TPE); //0: The TAMPER pin is free for general purpose I/O
+
+  //Disable Interrupt
+  //in Backup control/status register (BKP_CSR)
+  //TPIE:TAMPER pin interrupt enable
+  BKP->CSR &= ~(BKP_CSR_TPIE); //0: Tamper interrupt disabled
+  NVIC_DisableIRQ(TAMPER_IRQn);
+
+  //Clear Interrupt
+  //CTI:Clear tamper interrupt
+  //CTE:Clear tamper event
+  BKP->CSR |= BKP_CSR_CTI; //1: Clear the Tamper interrupt and the TIF Tamper interrupt flag.
+  BKP->CSR |= BKP_CSR_CTE; //1: Reset the TEF Tamper event flag (and the Tamper detector)
+}
+
