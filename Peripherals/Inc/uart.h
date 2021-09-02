@@ -25,4 +25,9 @@ void  uart_UART1_config(void);
  */
 bool  uart_UART1_transmit(uint8_t *data, uint8_t len, uint32_t timeout);
 
+/*
+ * @brief UART1 Transmit Receive
+ */
+bool  uart_UART1_receive(uint8_t *data, uint8_t len, uint32_t timeout);
+
 #endif /* INC_UART_H_ */
