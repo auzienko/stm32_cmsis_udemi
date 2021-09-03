@@ -157,3 +157,174 @@ bool  uart_UART1_receive(uint8_t *data, uint8_t len, uint32_t timeout)
   }
   return (true);
 }
+
+/*
+ * @brief UART1 DMA Configuration
+ */
+void uart_UART1_DMA_config(void)
+{
+  //Enable UART DMA
+  //In Control register 3 (USART_CR3)
+  //DMAT:DMA enable transmitter
+  //DMAR:DMA enable receiver
+  USART1->CR3 |= USART_CR3_DMAT; //1: DMA mode is enabled for transmission
+  USART1->CR3 |= USART_CR3_DMAR; //1: DMA mode is enabled for reception
+
+  //Enable DMA1 Clock
+  //in AHB peripheral clock enable register (RCC_AHBENR)
+  //DMA1EN: DMA1 clock enable
+  RCC->AHBENR |= RCC_AHBENR_DMA1EN;
+
+  /* Table 78. Summary of DMA1 requests for each channel (ref man page 282)
+   * USART1_TX - Channel 4, USART1_RX - Channel 5
+   */
+
+  //Clear DMA1 - Channel 4 status flags & Channel 5 status flags
+  //in DMA interrupt flag clear register (DMA_IFCR)
+  DMA1->IFCR |= 0x0F << 12; //clear all 4 flags Channel 4
+  DMA1->IFCR |= 0x0F << 16; //clear all 4 flags Channel 5
+
+  //TX Channel DMA Configuration
+
+  //> Peripheral address - UART_DR
+  //> in DMA channel x peripheral address register (DMA_CPARx) (x = 1..7, where x = channel number)
+  DMA1_Channel4->CPAR = (uint32_t)(&(USART1->DR));
+
+  //> Mode - Normal/Circuit
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> CIRC: Circular mode
+  DMA1_Channel4->CCR &= ~(DMA_CCR_CIRC); // 0: Circular mode disabled
+
+  //> Memory/Peripheral Increment
+  //> Enable Memory increment
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> MINC: Memory increment mode
+  DMA1_Channel4->CCR |= DMA_CCR_MINC; //1: Memory increment mode enabled
+  //> Disable Peripheral increment
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> PINC: Peripheral increment mode
+  DMA1_Channel4->CCR &= ~(DMA_CCR_PINC); //0: Peripheral increment mode disabled
+
+  //> Set data size 8 bits <-> 8 bits
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> MSIZE[1:0]:Memory size
+  //> PSIZE[1:0]:Peripheral size
+  DMA1_Channel4->CCR &= ~(DMA_CCR_MSIZE); //00: 8-bits
+  DMA1_Channel4->CCR &= ~(DMA_CCR_PSIZE); //00: 8-bits
+
+  //> Direction Channel 4
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> DIR: Data transfer direction
+  DMA1_Channel4->CCR |= DMA_CCR_DIR; //1: Read from memory
+
+  //> Disable DMA Channel 4
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> EN:Channel enable
+  DMA1_Channel4->CCR &= ~(DMA_CCR_EN); //0: Channel disabled
+
+  //> Transfer complete Interrupt enable Channel 4
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> TCIE:Transfer complete interrupt enable
+  DMA1_Channel4->CCR |= DMA_CCR_TCIE; //1: TC interrupt enabled
+
+  //RX Channel DMA Configuration
+
+  //> Peripheral address - UART_DR
+  //> in DMA channel x peripheral address register (DMA_CPARx) (x = 1..7, where x = channel number)
+  DMA1_Channel5->CPAR = (uint32_t)(&(USART1->DR));
+
+  //> Mode - Normal/Circuit
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> CIRC: Circular mode
+  DMA1_Channel5->CCR &= ~(DMA_CCR_CIRC); // 0: Circular mode disabled
+
+  //> Memory/Peripheral Increment
+  //> Enable Memory increment
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> MINC: Memory increment mode
+  DMA1_Channel5->CCR |= DMA_CCR_MINC; //1: Memory increment mode enabled
+  //> Disable Peripheral increment
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> PINC: Peripheral increment mode
+  DMA1_Channel5->CCR &= ~(DMA_CCR_PINC); //0: Peripheral increment mode disabled
+
+  //> Set data size 8 bits <-> 8 bits
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> MSIZE[1:0]:Memory size
+  //> PSIZE[1:0]:Peripheral size
+  DMA1_Channel5->CCR &= ~(DMA_CCR_MSIZE); //00: 8-bits
+  DMA1_Channel5->CCR &= ~(DMA_CCR_PSIZE); //00: 8-bits
+
+  //> Direction Channel 5
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> DIR: Data transfer direction
+  DMA1_Channel5->CCR &= ~(DMA_CCR_DIR); //0: Read from peripheral
+
+  //> Disable DMA Channel 5
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> EN:Channel enable
+  DMA1_Channel5->CCR &= ~(DMA_CCR_EN); //0: Channel disabled
+
+  //> Transfer complete Interrupt enable Channel 5
+  //> in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //> TCIE:Transfer complete interrupt enable
+  DMA1_Channel5->CCR |= DMA_CCR_TCIE; //1: TC interrupt enabled
+
+  //Enable DMA Interrupt
+  NVIC_SetPriority(DMA1_Channel4_IRQn, 6);
+  NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+  NVIC_SetPriority(DMA1_Channel5_IRQn, 6);
+  NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+}
+
+/*
+ * @brief UART1 DMA Transmit
+ */
+void uart_UART1_DMA_transmit(uint8_t *data, uint8_t len)
+{
+  //Clear DMA1 - Channel 4 status flags
+  //in DMA interrupt flag clear register (DMA_IFCR)
+  DMA1->IFCR |= 0x0F << 12; //clear all 4 flags Channel 4
+
+  //Set Memory Address
+  //in DMA channel x memory address register (DMA_CMARx) (x = 1..7, where x = channel number)
+  DMA1_Channel4->CMAR = (uint32_t)data;
+
+  //Set Number of transfers
+  //in DMA channel x number of data register (DMA_CNDTRx) (x = 1..7, where x = channel number)
+  DMA1_Channel4->CNDTR = len;
+
+  //Enable DMA Channel 4
+  DMA1_Channel4->CCR |= DMA_CCR_EN; //1: Channel enabled
+}
+
+/*
+ * @brief UART1 DMA Receive
+ */
+void uart_UART1_DMA_receive(uint8_t *data, uint8_t len)
+{
+  __IO uint32_t readTmp;
+
+  //Clear overrun error, if we have any
+  //in Status register (USART_SR)
+  //ORE:Overrun error
+  //It is cleared by a software sequence (an read to the USART_SR register followed by a read to the USART_DR register).
+  readTmp = USART1->SR;
+  readTmp = USART1->DR;
+  (void)readTmp;
+
+  //Clear DMA1 - Channel 5 status flags
+  //in DMA interrupt flag clear register (DMA_IFCR)
+  DMA1->IFCR |= 0x0F << 16; //clear all 4 flags Channel 5
+
+  //Set Memory Address
+  //in DMA channel x memory address register (DMA_CMARx) (x = 1..7, where x = channel number)
+  DMA1_Channel5->CMAR = (uint32_t)data;
+
+  //Set Number of transfers
+  //in DMA channel x number of data register (DMA_CNDTRx) (x = 1..7, where x = channel number)
+  DMA1_Channel5->CNDTR = len;
+
+  //Enable DMA Channel 5
+  DMA1_Channel5->CCR |= DMA_CCR_EN; //1: Channel enabled
+}

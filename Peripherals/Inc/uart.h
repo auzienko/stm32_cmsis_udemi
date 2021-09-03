@@ -30,4 +30,19 @@ bool  uart_UART1_transmit(uint8_t *data, uint8_t len, uint32_t timeout);
  */
 bool  uart_UART1_receive(uint8_t *data, uint8_t len, uint32_t timeout);
 
+/*
+ * @brief UART1 DMA Configuration
+ */
+void uart_UART1_DMA_config(void);
+
+/*
+ * @brief UART1 DMA Transmit
+ */
+void uart_UART1_DMA_transmit(uint8_t *data, uint8_t len);
+
+/*
+ * @brief UART1 DMA Receive
+ */
+void uart_UART1_DMA_receive(uint8_t *data, uint8_t len);
+
 #endif /* INC_UART_H_ */
