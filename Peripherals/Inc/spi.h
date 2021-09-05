@@ -29,7 +29,7 @@ bool spi_transmit(uint8_t *pData, uint8_t len, uint32_t timeout);
 /*
  * @brief SPI Receive
  */
-bool spi_recieve(uint8_t *pData, uint8_t len, uint32_t timeout);
+bool spi_receive(uint8_t *pData, uint8_t len, uint32_t timeout);
 
 /*
  * @brief RFID Chip Select (CS) pin configuration

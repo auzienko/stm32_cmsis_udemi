@@ -19,6 +19,7 @@
 #include "adc.h"
 #include "rtc.h"
 #include "spi.h"
+#include "rc522.h"
 
 //TM1637 Digits pins
 #define DIGIT_Port    GPIOB

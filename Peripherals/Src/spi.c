@@ -100,7 +100,7 @@ void spi_config(void)
   //in SPI control register 1 (SPI_CR1) (not used in I2S mode)
   //SSM:Software slave management
   //SSI:Internal slave select
-  SPI1->CR1 &= ~(SPI_CR1_SSM | SPI_CR1_SSI); //0: Software slave management disabled
+  SPI1->CR1 |= (SPI_CR1_SSM | SPI_CR1_SSI); //1: Software slave management enabled
 
   //Enable SPI
   //in SPI control register 1 (SPI_CR1) (not used in I2S mode)
@@ -117,19 +117,142 @@ void spi_config(void)
 /*
  * @brief SPI Transmit
  */
-bool spi_transmit(uint8_t *pData, uint8_t len, uint32_t timeout);
+bool spi_transmit(uint8_t *pData, uint8_t len, uint32_t timeout)
+{
+  uint8_t       dataIdx;
+  uint32_t      startTick;
+  __IO uint32_t tempRead;
+
+  dataIdx = 0;
+  //Enable SPI, if it is not enable
+  //in SPI control register 1 (SPI_CR1) (not used in I2S mode)
+  //SPE:SPI enable
+  SPI1->CR1 |= SPI_CR1_SPE; //1: Peripheral enabled
+
+  //Timeout initial ticks
+  startTick = rcc_msGetTicks();
+  //While loop, transmitting data, managing timeout
+  while (dataIdx < len)
+  {
+    if (SPI1->SR & SPI_SR_TXE) //SPI status register (SPI_SR) /Tx buffer empty
+    {
+      SPI1->DR = pData[dataIdx];
+      dataIdx++;
+    }
+    else
+    {
+      if((rcc_msGetTicks() - startTick >= timeout))
+        return (false);
+    }
+  }
+  //Wait for busy flag
+  while (SPI1->SR & SPI_SR_BSY) //SPI status register (SPI_SR) /BSY:Busy flag
+  {
+    if((rcc_msGetTicks() - startTick >= timeout))
+      return (false);
+  }
+  //Clear overrun --> DR, SR
+  //in SPI status register (SPI_SR)
+  //OVR:Over run flag
+  //Clearing the OVR bit is done by a read operation on the SPI_DR register followed by a read access to the SPI_SR register.
+  tempRead = SPI1->DR;
+  tempRead = SPI1->SR;
+  (void)tempRead;
+  return (true);
+}
 
 /*
  * @brief SPI Receive
  */
-bool spi_recieve(uint8_t *pData, uint8_t len, uint32_t timeout);
+bool spi_receive(uint8_t *pData, uint8_t len, uint32_t timeout)
+{
+  uint8_t       dataIdx;
+  uint32_t      startTick;
+  __IO uint32_t tempRead;
+  bool          isTransmit;
+
+  dataIdx = 0;
+  isTransmit = true;
+  //Enable SPI, if it is not enable
+  //in SPI control register 1 (SPI_CR1) (not used in I2S mode)
+  //SPE:SPI enable
+  SPI1->CR1 |= SPI_CR1_SPE; //1: Peripheral enabled
+
+  //Timeout initial ticks
+  startTick = rcc_msGetTicks();
+
+  //While loop: Transmit, Receive, managing timeout
+  while(dataIdx < len)
+  {
+    //Transmit dummy data
+    if ((SPI1->SR & SPI_SR_TXE) && isTransmit)//SPI status register (SPI_SR) / TXE:Transmit buffer empty
+    {
+      SPI1->DR = 0xFF;
+      isTransmit = false;
+    }
+    //Receive
+    if (SPI1->SR & SPI_SR_RXNE)//SPI status register (SPI_SR) / RXNE: Receive buffer not empty
+    {
+      pData[dataIdx] = SPI1->DR;
+      dataIdx++;
+      isTransmit = true;
+    }
+    else
+    {
+      if((rcc_msGetTicks() - startTick >= timeout))
+        return (false);
+    }
+  }
+  while (SPI1->SR & SPI_SR_BSY) //SPI status register (SPI_SR) /BSY:Busy flag
+  {
+    if((rcc_msGetTicks() - startTick >= timeout))
+      return (false);
+  }
+  //Clear overrun --> DR, SR
+  //in SPI status register (SPI_SR)
+  //OVR:Over run flag
+  //Clearing the OVR bit is done by a read operation on the SPI_DR register followed by a read access to the SPI_SR register.
+  tempRead = SPI1->DR;
+  tempRead = SPI1->SR;
+  (void)tempRead;
+  return (true);
+}
 
 /*
  * @brief RFID Chip Select (CS) pin configuration
  */
-void spi_RFID_CS_config(void);
+void spi_RFID_CS_config(void)
+{
+  //Enable PA clock (CS - PA4)
+  //in APB2 peripheral clock enable register (RCC_APB2ENR)
+  //IOPAEN:IO port A clock enable
+  RCC->APB2ENR |= RCC_APB2ENR_IOPAEN; //1: IO port A clock enabled
+
+  //Mode to Output low speed
+  //in Port configuration register low (GPIOx_CRL) (x=A..G)
+  //MODEy[1:0]:Portx mode bits(y=0..7
+  //CNFy[1:0]:Portx configuration bits(y=0..7)
+  GPIOA->CRL &= ~(GPIO_CRL_MODE4); //00: Input mode (reset state)
+  GPIOA->CRL |= GPIO_CRL_MODE4_1; //10: Output mode, max speed 2 MHz.
+  GPIOA->CRL &= ~(GPIO_CRL_CNF4); //00: General purpose output push-pull
+
+  //Default value HIGH
+  //in Port bit set/reset register (GPIOx_BSRR) (x=A..G)
+  //BSy:Port x Set bit y(y=0..15)
+  GPIOA->BSRR = GPIO_BSRR_BS4; //1: Set the corresponding ODRx bit
+}
 
 /*
  * @brief Chip Select (CS) Set/Reset
  */
-void spi_RFID_CS_write(bool state);
+void spi_RFID_CS_write(bool state)
+{
+  if(state)
+  {
+    GPIOA->BSRR = GPIO_BSRR_BS4; //1: Set the corresponding ODRx bit
+  }
+  else
+  {
+    GPIOA->BSRR = GPIO_BSRR_BR4; //1: Reset the corresponding ODRx bit
+  }
+}
