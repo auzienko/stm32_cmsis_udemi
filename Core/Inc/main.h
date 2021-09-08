@@ -14,13 +14,14 @@
 #include "rcc.h"
 #include "uart.h"
 #include "gpio.h"
-#include "tm1637.h"
+//#include "tm1637.h"
 #include "exti.h"
 #include "adc.h"
 #include "rtc.h"
 #include "spi.h"
-#include "rc522.h"
+//#include "rc522.h"
 #include "i2c.h"
+#include "TJ_MPU6050.h"
 
 //TM1637 Digits pins
 #define DIGIT_Port    GPIOB
