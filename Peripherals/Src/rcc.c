@@ -85,6 +85,7 @@ void rcc_HSE_config(void)
 void rcc_SysTick_config(uint32_t arr)
 {
   //Reset Control register (STK_CTRL SysTick control and status register)
+  //in programming manual
   SysTick->CTRL = 0;
   //Set the Reload value (SysTick reload value register (STK_LOAD))
   SysTick->LOAD = arr - 1;

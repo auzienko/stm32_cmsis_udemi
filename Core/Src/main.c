@@ -1,7 +1,5 @@
 #include "main.h"
 
-#define MPU6050_I2C_ADDRS (0x68 << 1)
-
 int main(void)
 {
   //Max clock of 72MHz
@@ -20,13 +18,19 @@ int main(void)
   gpio_SW_config();
   //CRC Configuration
   crc_enable();
+  //Enable button Interrupt
+  exti_PB_config();
 
-  //Test CRC
-  crc_reset();
-  crc_accumulate(0x00110022);
-  crc_accumulate(0x00330044);
-  //Read
-  printf("CRC is %08lX\n", crc_read());
+  gpio_LED_writeGreen(1);
+  for (uint8_t i = 10; i > 0; i--)
+  {
+    printf("Entering sleep mode in %d sec\n", i);
+    rcc_msDelay(1000);
+  }
+
+  pwr_enter_sleep_mode();
+
+  printf("Woke up from sleep mode\n");
 
   /* Loop forever */
   while(1)
@@ -36,3 +40,13 @@ int main(void)
   }
 }
 
+void EXTI0_IRQHandler(void)
+{
+  NVIC_ClearPendingIRQ(EXTI0_IRQn);
+
+  //in Pending register (EXTI_PR)
+  //PRx:Pending bit
+  //This bit is set when the selected edge event arrives on the external interrupt line.
+  //This bit is cleared by writing a ‘1’ into the bit.
+  EXTI->PR = EXTI_PR_PR0;
+}
