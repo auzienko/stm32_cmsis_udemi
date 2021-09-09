@@ -21,7 +21,8 @@
 #include "spi.h"
 //#include "rc522.h"
 #include "i2c.h"
-#include "TJ_MPU6050.h"
+//#include "TJ_MPU6050.h"
+#include "crc.h"
 
 //TM1637 Digits pins
 #define DIGIT_Port    GPIOB
