@@ -16,11 +16,11 @@ void pwr_enter_sleep_mode(void)
   //in SysTick control and status register (STK_CTRL) (in Cortex M3 programming manual)
   SysTick->CTRL &= ~(SysTick_CTRL_TICKINT_Msk);
 
-  //Clear SleepOnExit
+  //Set SleepOnExit
   //in Cortex M3 programming manual
   //in System control register (SCB_SCR)
   //SLEEPONEXIT
-  SCB->SCR &= ~(SCB_SCR_SLEEPONEXIT_Msk); //0: Do not sleep when returning to Thread mode.
+  SCB->SCR |= SCB_SCR_SLEEPONEXIT_Msk; //1: Enter sleep, or deep sleep, on return from an interrupt service routine.
 
   //Clear Sleep DEEP
   //in Cortex M3 programming manual

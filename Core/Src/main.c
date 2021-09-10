@@ -49,4 +49,7 @@ void EXTI0_IRQHandler(void)
   //This bit is set when the selected edge event arrives on the external interrupt line.
   //This bit is cleared by writing a ‘1’ into the bit.
   EXTI->PR = EXTI_PR_PR0;
+
+  //Application...
+  printf("Back to sleep\n");
 }
