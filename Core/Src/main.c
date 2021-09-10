@@ -21,21 +21,24 @@ int main(void)
   //Enable button Interrupt
   exti_PB_config();
 
-  gpio_LED_writeGreen(1);
-  for (uint8_t i = 10; i > 0; i--)
+  for (uint8_t i = 5; i > 0; i--)
   {
-    printf("Entering sleep mode in %d sec\n", i);
+    printf("Entering stop mode in %d sec\n", i);
     rcc_msDelay(1000);
   }
 
-  pwr_enter_sleep_mode();
+  pwr_enter_stop_mode();
 
-  printf("Woke up from sleep mode\n");
+  //Re - configure System Clock
+  rcc_HSE_config();
+  rcc_SysTick_config(72000);
+  printf("Woke up from stop mode\n");
+
 
   /* Loop forever */
   while(1)
   {
-
+    gpio_LED_toggleGreen();
     rcc_msDelay(500);
   }
 }
@@ -51,5 +54,4 @@ void EXTI0_IRQHandler(void)
   EXTI->PR = EXTI_PR_PR0;
 
   //Application...
-  printf("Back to sleep\n");
 }

@@ -35,3 +35,44 @@ void pwr_enter_sleep_mode(void)
   //in SysTick control and status register (STK_CTRL) (in Cortex M3 programming manual)
   SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
 }
+
+/*
+ * @brief Enter Stop Mode
+ */
+void pwr_enter_stop_mode(void)
+{
+  //1. Disable SysTick Interrupt
+  //2. Clear SleepOnExit
+  //3. Set DEEP SLEEP
+  //4. Clear PDDS bit in PWR
+  //5. Put the device into low-power --> Stop __WFI();
+  //6. Resume SysTick Interrupt
+
+  //Disable SysTick Interrupt (Avoid waking up the MCU)
+  //in SysTick control and status register (STK_CTRL) (in Cortex M3 programming manual)
+  SysTick->CTRL &= ~(SysTick_CTRL_TICKINT_Msk);
+
+  //Clear SleepOnExit
+  //in Cortex M3 programming manual
+  //in System control register (SCB_SCR)
+  //SLEEPONEXIT
+  SCB->SCR &= ~(SCB_SCR_SLEEPONEXIT_Msk);
+
+  //Set Sleep DEEP
+  //in Cortex M3 programming manual
+  //in System control register (SCB_SCR)
+  //SLEEPDEEP
+  SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk; //1: Deep Sleep
+
+  //Clear PDDS bit in PWR
+  //in Power control register (PWR_CR)
+  //PDDS:Power down deep sleep.
+  PWR->CR &= ~(PWR_CR_PDDS); //0: Enter Stop mode when the CPU enters Deepsleep.
+
+  //Put the device into low-power --> Stop __WFI();
+  __WFI();
+
+  //On wake up --> Resume SysTick Interrupt
+  //in SysTick control and status register (STK_CTRL) (in Cortex M3 programming manual)
+  SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
+}
