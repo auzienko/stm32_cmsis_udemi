@@ -2,6 +2,14 @@
 
 int main(void)
 {
+  if(PWR->CSR & PWR_CSR_SBF)
+  {
+    //Clear Standby Flag
+    //in Power control register (PWR_CR)
+    //CSBF:Clear stand by flag.
+    PWR->CR |= PWR_CR_CSBF; //1: Clear the SBF Standby Flag (write).
+  }
+
   //Max clock of 72MHz
   rcc_HSE_config();
   rcc_SysTick_config(72000);
@@ -23,17 +31,11 @@ int main(void)
 
   for (uint8_t i = 5; i > 0; i--)
   {
-    printf("Entering stop mode in %d sec\n", i);
+    printf("Entering standby mode in %d sec\n", i);
     rcc_msDelay(1000);
   }
 
-  pwr_enter_stop_mode();
-
-  //Re - configure System Clock
-  rcc_HSE_config();
-  rcc_SysTick_config(72000);
-  printf("Woke up from stop mode\n");
-
+  pwr_enter_standby_mode();
 
   /* Loop forever */
   while(1)

@@ -20,4 +20,9 @@ void pwr_enter_sleep_mode(void);
  */
 void pwr_enter_stop_mode(void);
 
+/*
+ * @brief Enter Standby Mode
+ */
+void pwr_enter_standby_mode(void);
+
 #endif /* INC_PWR_H_ */
