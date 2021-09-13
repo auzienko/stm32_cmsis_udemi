@@ -24,6 +24,7 @@
 //#include "TJ_MPU6050.h"
 #include "crc.h"
 #include "pwr.h"
+#include "flash.h"
 
 //TM1637 Digits pins
 #define DIGIT_Port    GPIOB

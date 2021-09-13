@@ -2,13 +2,8 @@
 
 int main(void)
 {
-  if(PWR->CSR & PWR_CSR_SBF)
-  {
-    //Clear Standby Flag
-    //in Power control register (PWR_CR)
-    //CSBF:Clear stand by flag.
-    PWR->CR |= PWR_CR_CSBF; //1: Clear the SBF Standby Flag (write).
-  }
+  uint16_t wdata[3] = {0x1122, 0x3344, 0x5566};
+  uint16_t rdata[3] = {0};
 
   //Max clock of 72MHz
   rcc_HSE_config();
@@ -24,18 +19,20 @@ int main(void)
   gpio_PB_config();
   //GPIO switch configuration
   gpio_SW_config();
-  //CRC Configuration
-  crc_enable();
-  //Enable button Interrupt
-  exti_PB_config();
 
-  for (uint8_t i = 5; i > 0; i--)
+  //Flash -- 0x08007C00
+  //Write
+  flash_unlock();
+  flash_erase(0x08007C00);
+  flash_write16(0x08007C00, wdata, 3);
+  flash_lock();
+
+  //Read
+  flash_read16(0x08007C00, rdata, 3);
+  for (uint8_t i = 0; i < 3; i++)
   {
-    printf("Entering standby mode in %d sec\n", i);
-    rcc_msDelay(1000);
+    printf("rdata[%u] = %X\n", i, rdata[i]);
   }
-
-  pwr_enter_standby_mode();
 
   /* Loop forever */
   while(1)
@@ -43,17 +40,4 @@ int main(void)
     gpio_LED_toggleGreen();
     rcc_msDelay(500);
   }
-}
-
-void EXTI0_IRQHandler(void)
-{
-  NVIC_ClearPendingIRQ(EXTI0_IRQn);
-
-  //in Pending register (EXTI_PR)
-  //PRx:Pending bit
-  //This bit is set when the selected edge event arrives on the external interrupt line.
-  //This bit is cleared by writing a ‘1’ into the bit.
-  EXTI->PR = EXTI_PR_PR0;
-
-  //Application...
 }
