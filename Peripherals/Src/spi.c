@@ -79,7 +79,7 @@ void spi_config(void)
   //in SPI control register 1 (SPI_CR1) (not used in I2S mode)
   //BR[2:0]:Baud rate control
   SPI1->CR1 &= ~(SPI_CR1_BR); //clear
-  SPI1->CR1 |= (SPI_CR1_BR_2 | SPI_CR1_BR_1); //110: fPCLK/128
+  SPI1->CR1 |= SPI_CR1_BR_1; //010: fPCLK/8 --> 9MHz
 
   //MSB first
   //in SPI control register 1 (SPI_CR1) (not used in I2S mode)

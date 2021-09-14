@@ -431,3 +431,141 @@ bool adc_INJ_pollForConversion(uint32_t timeout)
   }
   return (true);
 }
+
+/*
+ * @brief ADC MIC (PA3 Config)
+ */
+void adc_MIC_config(void)
+{
+  //Enable ADC1 Clock
+  //in APB2 peripheral clock enable register (RCC_APB2ENR)
+  //ADC1EN:ADC1 interface clock enable
+  RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
+
+  //Right Align
+  //in ADC control register 2 (ADC_CR2)
+  //ALIGN: Data alignment
+  ADC1->CR2 &= ~(ADC_CR2_ALIGN); // 0: Right Alignment
+
+  //Sample time to 28.5 Cycle = (12 + 28.5)/12.5MHz = 3us
+  //in ADC sample time register 2 (ADC_SMPR2)
+  //PA3
+  ADC1->SMPR2 &= ~(ADC_SMPR2_SMP3); //clear
+  ADC1->SMPR2 |= (ADC_SMPR2_SMP3_0 | ADC_SMPR2_SMP3_1); // 011: 28.5 cycles
+
+  //TIM3_TRGO (timer trigger output)
+  //in ADC control register 2 (ADC_CR2)
+  //EXTTRIG:External trigger conversion mode for regular channels
+  ADC1->CR2 |= ADC_CR2_EXTTRIG; //1: Conversion on external event enabled
+  //EXTSEL[2:0]:External event select for regular group
+  ADC1->CR2 &= ~(ADC_CR2_EXTSEL);
+  ADC1->CR2 |= ADC_CR2_EXTSEL_2; //100: Timer 3 TRGO event
+
+  //Sequencer
+  //in ADC regular sequence register 3 (ADC_SQR3)
+  //Rank 1 - PA3, Channel 1
+  ADC1->SQR3 |= (3UL << 0); //Port A 3
+
+  //Number of conversion
+  //in ADC regular sequence register 1 (ADC_SQR1)
+  ADC1->SQR1 &= ~(ADC_SQR1_L);//0000: 1 conversion
+
+  //Enable Scan mode
+  //in ADC control register 1 (ADC_CR1)
+  //SCAN: Scan mode
+  ADC1->CR1 |= ADC_CR1_SCAN;
+
+  //Enable DMA - ADC register
+  //in ADC control register 2 (ADC_CR2)
+  //DMA: Direct memory access mode
+  ADC1->CR2 |= ADC_CR2_DMA;
+
+  //Single Conversion
+  //in ADC control register 2 (ADC_CR2)
+  //CONT:Continuous conversion
+  ADC1->CR2 &= ~(ADC_CR2_CONT); // 0: Single conversion mode
+
+  //Power up ADC
+  //in ADC control register 2 (ADC_CR2)
+  ADC1->CR2 |= ADC_CR2_ADON;
+
+  //Wait for ADC clock to stabilise (couple micro seconds)
+  for (uint16_t i = 0; i < 36; i++); //72 cycles = 1uSec, for loop 4 cycles each, 72*2/4 = 36
+}
+
+/*
+ * @brief ADC MIC DMA
+ */
+void adc_MIC_DMA_config(uint16_t *pAdcBuffer, uint16_t size)
+{
+  //DMA1 - Channel 1 --> ADC1 (ref man page 282)
+  //Enable DMA1 Clock
+  //in AHB peripheral clock enable register (RCC_AHBENR)
+  //DMA1EN: DMA1 clock enable
+  RCC->AHBENR |= RCC_AHBENR_DMA1EN;
+
+  //Clear DMA1 - Channel 1 status flags
+  //in DMA interrupt flag clear register (DMA_IFCR)
+  DMA1->IFCR |= 0x0F; //clear all 4 flags
+
+  //Peripheral address (src) --> ADC_DR
+  //in DMA channel x peripheral address register (DMA_CPARx) (x = 1..7, where x = channel number)
+  DMA1_Channel1->CPAR = (uint32_t)(&(ADC1->DR));
+
+  //Memory address (dst)
+  //in DMA channel x memory address register (DMA_CMARx) (x = 1..7, where x = channel number)
+  DMA1_Channel1->CMAR = (uint32_t)pAdcBuffer;
+
+  //Number of transfer
+  //in DMA channel x number of data register (DMA_CNDTRx) (x = 1..7, where x = channel number)
+  DMA1_Channel1->CNDTR = size;
+
+  //Circular / Normal
+  //in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //CIRC: Circular mode
+  DMA1_Channel1->CCR |= DMA_CCR_CIRC; // 1: Circular mode enabled
+
+  //Enable Memory increment
+  //in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //MINC: Memory increment mode
+  DMA1_Channel1->CCR |= DMA_CCR_MINC; //1: Memory increment mode enabled
+
+  //Disable Peripheral increment
+  //in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //PINC: Peripheral increment mode
+  DMA1_Channel1->CCR &= ~(DMA_CCR_PINC); //0: Peripheral increment mode disabled
+
+  //Size ADC 12-bits, Peripheral 16-bits
+  //in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //PSIZE[1:0]:Peripheral size
+  DMA1_Channel1->CCR &= ~(DMA_CCR_PSIZE);
+  DMA1_Channel1->CCR |= DMA_CCR_PSIZE_0; // 01: 16-bits
+
+  //Size Memory 16-bits
+  //in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //MSIZE[1:0]:Memory size
+  DMA1_Channel1->CCR &= ~(DMA_CCR_MSIZE);
+  DMA1_Channel1->CCR |= DMA_CCR_MSIZE_0; // 01: 16-bits
+
+  //Direction - Peripheral to Memory
+  //in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //DIR: Data transfer direction
+  DMA1_Channel1->CCR &= ~(DMA_CCR_DIR); // 0: Read from peripheral
+
+  //Enable DMA
+  //in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //EN:Channel enable
+  DMA1_Channel1->CCR |= DMA_CCR_EN; //1: Channel enabled
+
+  //Enable Transfer Complete Interrupt - DMA
+  //in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //TCIE:Transfer complete interrupt enable
+  DMA1_Channel1->CCR |= DMA_CCR_TCIE; //1: TC interrupt enabled
+
+  //Enable Half Transfer Interrupt
+  //in DMA channel x configuration register (DMA_CCRx) (x = 1..7, where x = channel number)
+  //HTIE:Half transfer interrupt enable
+  DMA1_Channel1->CCR |= DMA_CCR_HTIE; //1: HT interrupt enabled
+
+  NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+}

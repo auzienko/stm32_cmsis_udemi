@@ -84,4 +84,14 @@ void adc_INJ_start(void);
  */
 bool adc_INJ_pollForConversion(uint32_t timeout);
 
+/*
+ * @brief ADC MIC (PA3 Config)
+ */
+void adc_MIC_config(void);
+
+/*
+ * @brief ADC MIC DMA
+ */
+void adc_MIC_DMA_config(uint16_t *pAdcBuffer, uint16_t size);
+
 #endif /* INC_ADC_H_ */

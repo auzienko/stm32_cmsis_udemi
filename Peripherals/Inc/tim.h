@@ -65,4 +65,9 @@ void  tim_TIM4_Enconder_GPIO_config(void);
  */
 void  tim_TIM4_Encoder_config();
 
+/*
+ * @brief TIM3 ADC Mic
+ */
+void tim_TIM3_MIC_config(void);
+
 #endif /* INC_TIM_H_ */
