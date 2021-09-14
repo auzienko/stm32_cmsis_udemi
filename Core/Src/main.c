@@ -6,11 +6,13 @@ FRESULT   fresult;
 FATFS     fs;
 DWORD     freeClusters;
 FATFS     *pFatFs;
-uint32_t  total;
-uint32_t  freeSpace;
+FIL       fil;
 
 int main(void)
 {
+  char    dataRd[75];
+  UINT    readBytes;
+
   //Max clock of 72MHz
   rcc_HSE_config();
   rcc_SysTick_config(72000);
@@ -45,11 +47,31 @@ int main(void)
 
   printf("SD card result = %d\n", fresult);
 
-  //Read SD card size and free space
-  f_getfree("", &freeClusters, &pFatFs);
-  total = (pFatFs->n_fatent - 2) * pFatFs->csize;
-  freeSpace = freeClusters * pFatFs->csize;
-  printf("Total size %lu KB\nAvailable size %lu KB\n", total/2, freeSpace/2);
+  //Open file for Read/Write
+  fresult = f_open(&fil, "TestZ.txt", FA_CREATE_ALWAYS | FA_READ | FA_WRITE);
+  if (fresult != FR_OK)
+  {
+    printf("Failed to Open file\n");
+  }
+  else
+  {
+    printf("Successfully Opened file\n");
+    //Write to the file
+    f_puts("test string\nSTM32 tutorial", &fil);
+    f_lseek(&fil, 0);
+    readBytes = 0;
+    fresult = f_read(&fil, dataRd, 75, &readBytes);
+    if (fresult != FR_OK)
+    {
+      printf("Failed to Read file\n");
+    }
+    else
+    {
+      dataRd[readBytes] = '\0';
+      printf("String :%s\n", dataRd);
+    }
+    f_close(&fil);
+  }
 
   /* Loop forever */
   while(1)
