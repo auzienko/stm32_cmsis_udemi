@@ -1,10 +1,16 @@
 #include "main.h"
+#include "fatfs.h"
+
+//FatFs variables
+FRESULT   fresult;
+FATFS     fs;
+DWORD     freeClusters;
+FATFS     *pFatFs;
+uint32_t  total;
+uint32_t  freeSpace;
 
 int main(void)
 {
-  uint16_t wdata[3] = {0x1122, 0x3344, 0x5566};
-  uint16_t rdata[3] = {0};
-
   //Max clock of 72MHz
   rcc_HSE_config();
   rcc_SysTick_config(72000);
@@ -19,20 +25,31 @@ int main(void)
   gpio_PB_config();
   //GPIO switch configuration
   gpio_SW_config();
+  //SD card initialization
+  spi_SD_CS_config();
+  spi_GPIO_config();
+  spi_config();
+  MX_FATFS_Init();
+  rcc_msDelay(100);
 
-  //Flash -- 0x08007C00
-  //Write
-  flash_unlock();
-  flash_erase(0x08007C00);
-  flash_write16(0x08007C00, wdata, 3);
-  flash_lock();
-
-  //Read
-  flash_read16(0x08007C00, rdata, 3);
-  for (uint8_t i = 0; i < 3; i++)
+  //Mount SD card
+  fresult = f_mount(&fs, "", 1);
+  if (fresult != FR_OK)
   {
-    printf("rdata[%u] = %X\n", i, rdata[i]);
+    printf("Failed to mount SD card to FatFs\n");
   }
+  else
+  {
+    printf("Successfully Mounted SD card\n");
+  }
+
+  printf("SD card result = %d\n", fresult);
+
+  //Read SD card size and free space
+  f_getfree("", &freeClusters, &pFatFs);
+  total = (pFatFs->n_fatent - 2) * pFatFs->csize;
+  freeSpace = freeClusters * pFatFs->csize;
+  printf("Total size %lu KB\nAvailable size %lu KB\n", total/2, freeSpace/2);
 
   /* Loop forever */
   while(1)
