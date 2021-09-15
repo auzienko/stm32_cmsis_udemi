@@ -70,4 +70,9 @@ void  tim_TIM4_Encoder_config();
  */
 void tim_TIM3_MIC_config(void);
 
+/*
+ * @brief TIM2 - Time Base Ticks/Delay - ms
+ */
+void tim_TIM2_initTick(void);
+
 #endif /* INC_TIM_H_ */

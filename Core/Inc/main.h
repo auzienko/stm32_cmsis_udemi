@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "rcc.h"
+#include "tim.h"
 #include "uart.h"
 #include "gpio.h"
 //#include "tm1637.h"

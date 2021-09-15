@@ -644,3 +644,68 @@ void tim_TIM3_MIC_config(void)
     //CEN:Counter enable
     //TIM3->CR1 |= TIM_CR1_CEN; //1: Counter enabled
 }
+
+/*
+ * @brief TIM2 - Time Base Ticks/Delay - ms
+ */
+void tim_TIM2_initTick(void)
+{
+  //Enable TIM2 timer
+  //in APB1 peripheral clock enable register (RCC_APB1ENR)
+  //TIM2EN:TIM2 timer clock enable
+  RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+
+  //Count up
+  //in TIMx control register 1 (TIMx_CR1)
+  //DIR:Direction
+  TIM2->CR1 &= ~(TIM_CR1_DIR); //0: Counter used as upcounter
+
+  //Periodic
+  //in TIMx control register 1 (TIMx_CR1)
+  //OPM:One-pulse mode
+  TIM2->CR1 &= ~(TIM_CR1_OPM); //0: Counter is not stopped at update event
+
+  //Mode --> RESET
+  //in TIMx control register 2 (TIMx_CR2)
+  //MMS[2:0]: Master mode selection
+  TIM2->CR2 &= ~(TIM_CR2_MMS); //000: Reset - the UG bit from the TIMx_EGR register is used as trigger output (TRGO).
+
+  //Delay is ms
+  //Prescaler
+  //in TIMx prescaler (TIMx_PSC)
+  //PSC[15:0]:Prescaler value
+  TIM2->PSC = 72 - 1; //72MHz --> 1MHz
+
+  //Period
+  //in TIMx auto-reload register (TIMx_ARR)
+  TIM2->ARR = 1000 - 1; // 1MHz --> 1KHz
+
+  //Clear Update Interrupt flag
+  //in TIMxstatusregister(TIMx_SR)
+  //UIF:Update interrupt flag
+  TIM2->SR &= ~(TIM_SR_UIF);
+
+  //Enable Update interrupt
+  //in TIMx DMA/Interrupt enable register (TIMx_DIER)
+  //UIE:Update interrupt enable
+  TIM2->DIER |= TIM_DIER_UIE; //1: Update interrupt enabled.
+
+  //Enable NVIC Interrupt
+  NVIC_EnableIRQ(TIM2_IRQn);
+  NVIC_SetPriority(TIM2_IRQn, 5);
+
+  //Start Periodic TIM2
+  //in TIMx control register 1 (TIMx_CR1)
+  //CEN:Counter enable
+  TIM2->CR1 |= TIM_CR1_CEN; //1: Counter enabled
+}
+
+void TIM2_IRQHandler(void)
+{
+  if(TIM2->SR & TIM_SR_UIF) //UIF:Update interrupt flag
+  {
+    //reset
+    TIM2->SR &= ~(TIM_SR_UIF);
+    rcc_msIncTicks();
+  }
+}

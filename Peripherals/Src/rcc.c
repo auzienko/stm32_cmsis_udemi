@@ -130,8 +130,8 @@ void rcc_msDelay(uint32_t ms)
 /*
  * @brief SysTick Interrupt callback
  */
-void SysTick_Handler(void)
-{
-  NVIC_ClearPendingIRQ(SysTick_IRQn);
-  rcc_msIncTicks();
-}
+//void SysTick_Handler(void)
+//{
+//  NVIC_ClearPendingIRQ(SysTick_IRQn);
+//  rcc_msIncTicks();
+//}
